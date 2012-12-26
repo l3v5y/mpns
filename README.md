@@ -6,7 +6,7 @@ Send toast and live tile updates to Windows Phones through the Microsoft Push No
 
 Via [npm][]:
 
-	$ npm install mspn
+	$ npm install mpns
 	
 As a submodule of your Git project
 
@@ -20,33 +20,62 @@ As a submodule of your Git project
 var mpns = require('mpns');
 ```
 
-### Create a new notification
-You can create a new notification object (either of type live tile or toast).
+### Sending a toast
+To send a toast, simply call the `sendToast` method on mpns.
+
+```javascript
+var mpns = require('mpns');
+mpns.sendToast(pushUri, 'Bold Text', 'This is normal text');
+
+// Optional callback
+mpns.sendToast(pushUri, text1, text2, callback);
+```
+
+Each of the methods that send tile and toast notifications have two alternative parameter signatures:
+
+```
+send*(pushUri, [options], [callback]) 
+send*(pushUri, string1, string2, ..., [callback])
+```
+
+The ordering of the parameters in the non-object calling method assumes ordering as documented in the toast or tile-specific sections below.
+
+For toasts, the properties and ordering for them:
+
+* `text1` the text of the toast, this first text will appear bold on the phone
+* `text2` additional toast text, will appear in the normal font. It does not wrap.
+* `param` optional URI parameter within your application specifying the XAML page to open within the app, along with any query string parameters for the page's context
+
+### Sending a live tile update
+To send a tile update, call the `sendTile` method on mpns.
+
+It is recommended that you use the options syntax for this call as it is possible for the live tile update to include just one component in the update, say the tile count, and not update other properties.
+
+The option names or ordering for parameters is:
+
+* `backgroundImage` URI to the background image for the tile. Beware that the URI may be restricted to the whitelisted domain names that you provided in your application.
+* `count` the number to appear in the tile
+* `title` the title of the tile
+* `backBackgroundImage` URI to the image to be on the flip side of the tile
+* `backTitle` optional title for the back tile
+* `backContent` optional content for the back tile (appears in a larger font size)
+* `id` optional ID for a secodary tile
+
+Some devices support an enhanced tile format called a "flip tile", which supports some additional parameters. This kind of tile can be sent using the `sendFlipTile` method, which supports *all of the above* parameters as well as:
+* `smallbackgroundImage` URI to the background image for the tile when it is shrunk to small size
+* `wideBackgroundImage` URI to the background image for the tile when it is expanded to wide size
+* `wideBackContent` content for the back tile (appears in a larger font size) when the tile is expanded to wide size
+* `wideBackBackgroundImage` URI to the image to be on the flip side of the tile when the tile is expanded to wide size
+
+
+### Create a new notification object
+You can create a new notification object (either of type live tile or toast). This is the original style for this module but it is now recommended that you use the shorter `send*` syntax on the mpns object itself. This aligns with the WNS module for Windows in its simplicity.
 
 Property names for the notification object directly correlate to the names used in the MPNS XML payload as documented on MSDN. Properties can either be set directly on the object (such as toast.text1) or by passing the values in as options to the constructor.
 
 ```javascript
 options = { text1: 'Hello!', text2: 'Great to see you today.' };
 var toast = new mpns.toast(options);
-```
-
-### Sending a notification
-To send a notification simply call the `send` method on the object. The first parameter is the HTTP URI to the MPNS endpoint of the client you'd like to send the notification to. You may provide an optional callback function as well.
-
-```javascript
-toast.send('http://sn1.notify.live.net/throttledthirdparty/01.00/YOUR_ENDPOINT_HERE');
-```
-
-You can also use the other syntax. Let's send a live tile update!
-
-```javascript
-var toast = new mpns.liveTile();
-toast.title: 'My App';
-toast.backgroundUri: 'http://sample.com/image.png';
-toast.send('http://sn1.notify.live.net/throttledthirdparty/01.00/YOUR_ENDPOINT_HERE', function(err,res) {
-	if (err) console.dir(err);
-	else console.dir(res);
-});
 ```
 
 ### Sending a raw notification
@@ -74,12 +103,20 @@ Remember to take action on that information in order to be a good MPNS citizen. 
 
 - `minutesToDelay`: If this is present, it is the suggested minimum amount of time that you should wait until making another request to the same subscription URI. For HTTP 412s, for example, the minimum time is one hour and so the returned value defaults to 61.
 - `shouldDeleteChannel`: If this is set to `true`, the channel is gone according to MPNS. Delete it from your channel/subscription database and never look back.
-- `error`: If an error is captured while trying to make the HTTP request, this will be set to that error callback instance.
+- `innerError`: If an error is captured while trying to make the HTTP request, this will be set to that error callback instance.
 
-### A note about Windows Phone 7.5
-This module permits sending toasts and tiles specific to Mango. If you include the `param` field when sending a push to a 7.0 (first Windows Phone release) phone, unfortunately it may not be received, or will error out the subscription.
+### A note about different Windows Phone versions
+This module permits sending toasts and tiles supported only on specific versions of Windows Phone. If you use those features on a version where they are unsupported, unfortunately notifications may not be received, or will error out the subscription.
 
 Take care when registering your subscription channels with your cloud service to include the application platform version of the app (7.1 for Mango apps). To rock, maybe also grab the OS version and deployed app version. That information can be helpful when supporting customers.
+
+Here is a list of features that are only supported in given versions of Windows Phone:
+* Only supported in Windows Phone 7.5+ (Mango)
+    * Including the `param` field when sending a push
+    * Including the `id` parameter when sending a tile
+* Only supported in Windows Phone 7.8+
+    * Sending "flip" tiles
+
 
 ## Credits
 
@@ -109,6 +146,25 @@ limitations under the License.
 [npm]: http://github.com/isaacs/npm
 
 ## Changelog
+
+1.2.1:
+
+* Renames `sendRawNotification` to `sendRaw`
+* Renames `error` parameter to `innerError`
+* Fixes issue #8 that `sendRaw` wasn't working
+
+1.2.0:
+
+* Adds support for `sendFlipTile` method to support the new kinds of tiles added in 7.8+ devices
+* Adds support for secondary tiles via the `id` parameter
+
+1.1.1:
+
+* Adds parameter validation that will throw, for robustness.
+
+1.1.0:
+
+* Adds `sendText` and `sendTile` methods more consistent with the WNS module, removing the need to create a new object, only to then call send on it with a push URI.
 
 1.0.4:
 
