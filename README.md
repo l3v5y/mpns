@@ -59,14 +59,28 @@ The option names or ordering for parameters is:
 * `backBackgroundImage` URI to the image to be on the flip side of the tile
 * `backTitle` optional title for the back tile
 * `backContent` optional content for the back tile (appears in a larger font size)
-* `id` optional ID for a secodary tile
+* `id` optional ID for a secondary tile
 
 Some devices support an enhanced tile format called a "flip tile", which supports some additional parameters. This kind of tile can be sent using the `sendFlipTile` method, which supports *all of the above* parameters as well as:
+
 * `smallbackgroundImage` URI to the background image for the tile when it is shrunk to small size
 * `wideBackgroundImage` URI to the background image for the tile when it is expanded to wide size
 * `wideBackContent` content for the back tile (appears in a larger font size) when the tile is expanded to wide size
 * `wideBackBackgroundImage` URI to the image to be on the flip side of the tile when the tile is expanded to wide size
 
+On WP8, IconicTiles can be sent using sendIconicTile, which supports the following parameters
+
+* `smallIconImage` URI for the icon when the tile is shrunk to small size, or in the corner of a full size tile with wideContent* set
+* `iconImage` URI for the icon when the tile is medium sized, or wide with no wideContent* set
+* `wideContent1` line 1 (bold) text for a wide tile
+* `wideContent2` line 2 for a wide tile
+* `wideContent3` line 3 for a wide tile
+* `count` the number to appear in the tile
+* `title` the title of the tile
+* `backgroundColor` the background fill of the tile
+* `id` optional ID for a secondary tile
+
+Additionally, all values can be "cleared" by sending a message with them set to " " (this sends Action="Clear" for the given parameter)
 
 ### Create a new notification object
 You can create a new notification object (either of type live tile or toast). This is the original style for this module but it is now recommended that you use the shorter `send*` syntax on the mpns object itself. This aligns with the WNS module for Windows in its simplicity.
@@ -116,6 +130,8 @@ Here is a list of features that are only supported in given versions of Windows 
     * Including the `id` parameter when sending a tile
 * Only supported in Windows Phone 7.8+
     * Sending "flip" tiles
+* Only supported in Windows Phone 8+
+	* Sending "iconic" tiles
 
 
 ## Credits
